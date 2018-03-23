@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>First Project    </title>
+    <style>
+        html, body, #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #optionsDiv {
+            position: absolute;
+            bottom: 17px;
+            width: 90%;
+            padding: 20px 0;
+            z-index: 1;
+            text-align: center;
+        }
+
+        button {
+            background: white;
+            padding: 7px;
+            border: 1px solid #005e95;
+            font-size: 0.9em;
+            margin: 5px;
+            color: #005e95;
+            font-family: "Avenir Next W01", "Arial", sans-serif;
+        }
+
+            button:hover, button:focus {
+                background: #005e95;
+                color: white;
+                cursor: pointer;
+            }
+
+            #topbar {
+      background: #fff;
+      position: absolute;
+      top: 55px;
+      right: 15px;
+      padding: 6px;
+    }
+
+    .action-button {
+      font-size: 16px;
+      background-color: transparent;
+      border: 1px solid #D3D3D3;
+      color: #6e6e6e;
+      height: 32px;
+      width: 32px;
+      text-align: center;
+      box-shadow: 0 0 1px rgba(0, 0, 0, 0.3);
+    }
+
+    .action-button:hover,
+    .action-button:focus {
+      background: #0079c1;
+      color: #e4e4e4;
+    }
+
+    .active {
+      background: #0079c1;
+      color: #e4e4e4;
+    }
+    </style>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.6/esri/css/main.css">
+    <script src="https://js.arcgis.com/4.6/"></script>
+    <script>
+require([
+  "esri/Map",
+   "esri/views/MapView",
+  "esri/widgets/Search",
+      "esri/widgets/Locate",
+       "esri/widgets/Expand",
+       "esri/widgets/BasemapGallery",
+       "esri/widgets/ScaleBar",
+        "esri/widgets/Home",
+        "esri/widgets/Compass",
+        "dojo/query",
+        "dojo/on",
+       "esri/Graphic",
+       "esri/widgets/Sketch/SketchViewModel",
+       "esri/layers/GraphicsLayer",
+       "esri/geometry/Polygon",
+       "esri/geometry/Point",
+        "esri/geometry/support/webMercatorUtils",
+        "esri/geometry/Circle",
+        "esri/tasks/Locator",
+     
+
+  "dojo/domReady!"
+], function (Map, MapView, Search, Locate, Expand,
+    BasemapGallery, ScaleBar,
+    Home, Compass, query, on, Graphic,
+    SketchViewModel, GraphicsLayer, Polygon, Point, webMercatorUtils, Circle, Locator    ) {
+
+
+
+    //creating the vars
+    var locatorTask = new Locator({
+        url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer"
+    });
+
+    var compassWidget = new Compass({
+        view: view
+    });
+
+    // GraphicsLayer to hold graphics created via sketch view model
+    var tempGraphicsLayer = new GraphicsLayer();
+
+    var map = new Map({
+        basemap: "streets",
+        layers: [tempGraphicsLayer]
+    });
+
+    var view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [32.909550, 40.751906],
+        zoom: 9
+
+    });
+
+    var scaleBar = new ScaleBar({
+        view: view,
+        unit: "dual" // The scale bar displays both metric and non-metric units.
+    });
+
+  var searchWidget = new Search({
+      titleVisible: true,
+      view: view
+  });
+
+  var homeBtn = new Home({
+      view: view
+  });
+
+  var locateBtn = new Locate({
+      view: view
+  });
+
+  var basemapGallery = new BasemapGallery({
+      view: view,
+      container: document.createElement("div")
+  });
+
+
+  var bgExpand = new Expand({
+      view: view,
+      content: basemapGallery.domNode,
+      expandIconClass: "esri-icon-basemap"
+  });
+
+    // adding to ui
+  view.ui.add([
+{
+    component: homeBtn,
+    position: "top-left",
+    index: 1
+}, {
+    component: locateBtn,
+    position: "top-left"
+}, {
+    component: searchWidget,
+    position: "top-right",
+    index: 0
+}, {
+    component: bgExpand,
+    position: "bottom-right",
+    index: 1
+},
+{
+    component: scaleBar,
+    position: "bottom-left",
+    index: 1
+},
+
+{
+    component: compassWidget,
+    position: "top-left",
+    index: 2
+}
+  ]);
+
+
+  var point = {
+      type: "point", // autocasts as new Point()
+
+      longitude: 32.909550,
+      latitude: 40.751906
+  };
+
+    // Create a symbol for drawing the point
+  var markerSymbol = {
+      type: "simple-marker",  // autocasts as new SimpleMarkerSymbol()
+      color: [226, 119, 40]
+  };
+
+    // Create a graphic and add the geometry and symbol to it
+  var pointGraphic = new Graphic({
+      geometry: point,
+      symbol: markerSymbol
+  });
+
+  var pt = new Point({
+      longitude: 32.909550,
+      latitude: 40.751906
+
+  });
+
+  pt.on("click",  {
+      view.popup.open({
+          // Set the popup's title to the coordinates of the location   
+          title: "denemeeee",
+          location: event.mapPoint // Set the location of the popup to the clicked location
+      });
+
+  });
+  
+  
+
+  on(dojo.query("#stores"), "click", function () {
+      view.graphics.add(pointGraphic);
+
+     
+
+      // go to the given point
+      view.goTo(pt);
+  });
+
+  on(dojo.query("#remove"), "click", function () {
+      view.graphics.remove(pointGraphic);
+  });
+
+  on(dojo.query("#storad"), "click", function () {
+      var gl = new GraphicsLayer({ id: "circles" });
+
+      var circle = new Circle({
+          center: [32.909550, 40.751906]
+
+            
+      });
+
+      var graphic = new Graphic(circle);
+      gl.add(graphic);
+  });
+ 
+    /*button.on("click", function () {
+	    esriRequest(url, options).then(function (response) {
+	        // do something useful
+	    }).otherwise(function (error) {
+	        console.log("informative error message: ", error.message);
+	    });
+	});*/
+
+ 
+
+
+
+  view.when(function () {
+      // create a new sketch view model
+      var sketchViewModel = new SketchViewModel({
+          view: view,
+          layer: tempGraphicsLayer,
+          pointSymbol: { // symbol used for points
+              type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+              style: "square",
+              color: "#8A2BE2",
+              size: "16px",
+              outline: { // autocasts as new SimpleLineSymbol()
+                  color: [255, 255, 255],
+                  width: 3 // points
+              }
+          },
+          polylineSymbol: { // symbol used for polylines
+              type: "simple-line", // autocasts as new SimpleMarkerSymbol()
+              color: "#8A2BE2",
+              width: "4",
+              style: "dash"
+          },
+          polygonSymbol: { // symbol used for polygons
+              type: "simple-fill", // autocasts as new SimpleMarkerSymbol()
+              color: "rgba(138,43,226, 0.8)",
+              style: "solid",
+              outline: {
+                  color: "white",
+                  width: 1
+              }
+          }
+      });
+
+      // ************************************************************
+      // Get the completed graphic from the event and add it to view.
+      // This event fires when user presses
+      //  * "C" key to finish sketching point, polygon or polyline.
+      //  * Double-clicks to finish sketching polyline or polygon.
+      //  * Clicks to finish sketching a point geometry.
+      // ***********************************************************
+      sketchViewModel.on("draw-complete", function (evt) {
+          // if multipoint geometry is created, then change the symbol
+          // for the graphic
+          if (evt.geometry.type === "multipoint") {
+              evt.graphic.symbol = {
+                  type: "simple-marker",
+                  style: "square",
+                  color: "green",
+                  size: "16px",
+                  outline: {
+                      color: [255, 255, 255],
+                      width: 3
+                  }
+              };
+          }
+          // add the graphic to the graphics layer
+          tempGraphicsLayer.add(evt.graphic);
+          setActiveButton();
+      });
+
+      // *************************************
+      // activate the sketch to create a point
+      // *************************************
+      var drawPointButton = document.getElementById("pointButton");
+      drawPointButton.onclick = function () {
+          // set the sketch to create a point geometry
+          sketchViewModel.create("point");
+          setActiveButton(this);
+      };
+
+      // **********************************************//
+      // *activate the sketch to create a multipoint***//
+      // **********************************************//
+      var drawMultipointButton = document.getElementById(
+        "multipointButton");
+      drawMultipointButton.onclick = function () {
+          // set the sketch to create a multipoint geometry
+          sketchViewModel.create("multipoint");
+          setActiveButton(this);
+      };
+
+      // ****************************************
+      // activate the sketch to create a polyline
+      // ****************************************
+      var drawLineButton = document.getElementById("polylineButton");
+      drawLineButton.onclick = function () {
+          // set the sketch to create a polyline geometry
+          sketchViewModel.create("polyline");
+          setActiveButton(this);
+      };
+
+      // ***************************************
+      // activate the sketch to create a polygon
+      // ***************************************
+      var drawPolygonButton = document.getElementById("polygonButton");
+      drawPolygonButton.onclick = function () {
+          // set the sketch to create a polygon geometry
+          sketchViewModel.create("polygon");
+          setActiveButton(this);
+      };
+
+      // **************
+      // reset button
+      // **************
+      document.getElementById("resetBtn").onclick = function () {
+          tempGraphicsLayer.removeAll();
+          sketchViewModel.reset();
+          setActiveButton();
+      };
+
+      function setActiveButton(selectedButton) {
+          // focus the view to activate keyboard shortcuts for sketching
+          view.focus();
+          var elements = document.getElementsByClassName("active");
+          for (var i = 0; i < elements.length; i++) {
+              elements[i].classList.remove("active");
+          }
+          if (selectedButton) {
+              selectedButton.classList.add("active");
+          }
+      }
+  });
+
+
+        
+  map.on("load", function () {
+      //after map loads, connect to listen to mouse move & drag events
+      map.on("mouse-move", showCoordinates);
+      map.on("mouse-drag", showCoordinates);
+  });
+
+  function showCoordinates(evt) {
+      //the map is in web mercator but display coordinates in geographic (lat, long)
+      var mp = webMercatorUtils.webMercatorToGeographic(event.mapPoint);
+      //display mouse coordinates
+      dom.byId("info").innerHTML = mp.x.toFixed(3) + ", " + mp.y.toFixed(3);
+  }
+
+ 
+
+  view.on("click", function (event) {
+      event.stopPropagation(); // overwrite default click-for-popup behavior
+
+      var mp = webMercatorUtils.webMercatorToGeographic(event.mapPoint);
+      // Get the coordinates of the click on the view
+      var lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
+      var lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
+
+      view.popup.open({
+          // Set the popup's title to the coordinates of the location   
+          title: "Reverse geocode: [" + mp.x.toFixed(3) + ", " + mp.y.toFixed(3) + "]",
+          location: event.mapPoint // Set the location of the popup to the clicked location
+      });
+
+      // Display the popup
+      // Execute a reverse geocode using the clicked location
+      locatorTask.locationToAddress(event.mapPoint).then(function (
+        response) {
+          // If an address is successfully found, show it in the popup's content
+          view.popup.content = response.address;
+      }).otherwise(function (err) {
+          // If the promise fails and no result is found, show a generic message
+          view.popup.content =
+            "No address was found for this location";
+      });
+  });
+
+});
+    </script>
+</head>
+<body>
+
+    <div id="optionsDiv">
+        <span id="info" style="position:absolute; left:25px; bottom:2   5px; color:#000; z-index:50;"></span>
+        <button id="stores">Show Stores</button>
+        <button id="storad">Show Store Radius</button>
+        <button id="remove">Remove Points</button>
+    </div>
+    <div id="viewDiv">
+        
+        <div id="topbar">
+            <button class="action-button esri-icon-blank-map-pin" id="pointButton" type="button"
+                    title="Draw point"></button>
+            <button class="action-button esri-icon-handle-horizontal" id="multipointButton" type="button"
+                    title="Draw multipoint"></button>
+            <button class="action-button esri-icon-polyline" id="polylineButton" type="button"
+                    title="Draw polyline"></button>
+            <button class="action-button esri-icon-polygon" id="polygonButton" type="button"
+                    title="Draw polygon"></button>
+            <button class="action-button esri-icon-trash" id="resetBtn" type="button" title="Clear graphics"></button>
+        </div>
+
+
+    </div>
+</body>
+</html>
